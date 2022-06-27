@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Net;
 using System.Timers;
+using Cjwdev.WindowsApi;
 
 namespace ServiceDemo
 {
@@ -37,7 +38,6 @@ namespace ServiceDemo
             timer.Interval = 60000; // 60 seconds
             timer.Elapsed += OnTimerEscape;
             timer.Start();*/
-
             serviceStatus.dwCurrentState = ServiceState.SERVICE_RUNNING;
             SetServiceStatus(this.ServiceHandle, ref serviceStatus);
         }
@@ -52,23 +52,20 @@ namespace ServiceDemo
                 while (true)
                 {
                     var context = listener.GetContext();
-                    eventLog.WriteEntry(context.Request.Url.ToString(), EventLogEntryType.Information, _eventID++);
-                    
-                    context.Response.StatusCode = (int)HttpStatusCode.OK;
-                    context.Response.StatusDescription = "OK"; 
-                    context.Response.AddHeader("Server", "ServiceDemo");
-                    using (StreamWriter writer = new StreamWriter(context.Response.OutputStream, Encoding.UTF8))
+                    if (!context.Request.Url.ToString().Contains("favicon.ico"))
                     {
-                        writer.Write("ServiceDemo 已收到消息");
-                        writer.Close();
-                        context.Response.Close();
+                        eventLog.WriteEntry(context.Request.Url.ToString(), EventLogEntryType.Information, _eventID++);
+                        context.Response.StatusCode = (int)HttpStatusCode.OK;
+                        context.Response.StatusDescription = "OK";
+                        context.Response.AddHeader("Server", "ServiceDemo");
+                        using (StreamWriter writer = new StreamWriter(context.Response.OutputStream, Encoding.UTF8))
+                        {
+                            writer.Write("ServiceDemo 已收到消息");
+                            writer.Close();
+                            context.Response.Close();
+                        }
+                        Interop.CreateProcess(@"D:\Repo\ServiceDemo\ParameterDemo\bin\Debug\ParameterDemo.exe", context.Request.Url.ToString());
                     }
-                    //new ToastContentBuilder()
-                    //    .AddArgument("action", "viewConversation")
-                    //    .AddArgument("conversationId", 9813)
-                    //    .AddText("Andrew sent you a picture")
-                    //    .AddText("Check this out, The Enchantments in Washington!")
-                    //    .Show();
                 }
             }
             catch (Exception e)
