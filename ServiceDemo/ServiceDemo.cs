@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.ServiceProcess;
 using System.Runtime.InteropServices;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Net;
 using System.Timers;
-using Cjwdev.WindowsApi;
+using System.Web;
 
 namespace ServiceDemo
 {
@@ -55,6 +56,7 @@ namespace ServiceDemo
                     if (!context.Request.Url.ToString().Contains("favicon.ico"))
                     {
                         eventLog.WriteEntry(context.Request.Url.ToString(), EventLogEntryType.Information, _eventID++);
+                        var res = GetParam(context.Request.Url.ToString());
                         context.Response.StatusCode = (int)HttpStatusCode.OK;
                         context.Response.StatusDescription = "OK";
                         context.Response.AddHeader("Server", "ServiceDemo");
@@ -64,7 +66,8 @@ namespace ServiceDemo
                             writer.Close();
                             context.Response.Close();
                         }
-                        Interop.CreateProcess(@"D:\Repo\ServiceDemo\ParameterDemo\bin\Debug\ParameterDemo.exe", context.Request.Url.ToString());
+                        eventLog.WriteEntry($"Prepare to lunch {res["start"]}", EventLogEntryType.Information, _eventID++);
+                        Interop.CreateProcess(res["start"], context.Request.Url.ToString());
                     }
                 }
             }
@@ -95,6 +98,32 @@ namespace ServiceDemo
             SetServiceStatus(this.ServiceHandle, ref serviceStatus);
         }
 
+        public static Dictionary<string, string> GetParam(string url)
+        {
+            Dictionary<string, string> res = new Dictionary<string, string>();
+            int start = 0, end = 0;
+            var resstring = HttpUtility.UrlDecode(url);
+            start = resstring.IndexOf("?");
+            resstring = resstring.Substring(start + 1);
+            start = 0;
+            while (end != -1)
+            {
+                end = resstring.IndexOf("&", start, StringComparison.Ordinal);
+                if (end != -1)
+                {
+                    var temp = resstring.Substring(start, end - start).Split('=');
+                    res.Add(temp?[0], temp?[1]);
+                }
+                else
+                {
+                    var temp = resstring.Substring(start).Split('=');
+                    if (temp.Length == 1) break;
+                    res.Add(temp?[0], temp?[1]);
+                }
+                start = end + 1;
+            }
+            return res;
+        }
     }
 
     public enum ServiceState
