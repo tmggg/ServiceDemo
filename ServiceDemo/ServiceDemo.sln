@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceDemo", "ServiceDemo.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParameterDemo", "..\ParameterDemo\ParameterDemo.csproj", "{FA17BEF8-3AD4-41DE-AADC-CB05B15FDF70}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "AuthingServiceSetup", "..\AuthingServiceSetup\AuthingServiceSetup.vdproj", "{E5C90D0D-E0C7-42D1-920B-6BDE10427E1C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,8 @@ Global
 		{FA17BEF8-3AD4-41DE-AADC-CB05B15FDF70}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FA17BEF8-3AD4-41DE-AADC-CB05B15FDF70}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FA17BEF8-3AD4-41DE-AADC-CB05B15FDF70}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E5C90D0D-E0C7-42D1-920B-6BDE10427E1C}.Debug|Any CPU.ActiveCfg = Debug
+		{E5C90D0D-E0C7-42D1-920B-6BDE10427E1C}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
