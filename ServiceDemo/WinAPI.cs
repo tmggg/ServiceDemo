@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace ServiceDemo
@@ -150,7 +151,7 @@ namespace ServiceDemo
                             PROCESS_INFORMATION tProcessInfo;
                             STARTUPINFO tStartUpInfo = new STARTUPINFO();
                             tStartUpInfo.cb = Marshal.SizeOf(typeof(STARTUPINFO));
-                            bool ChildProcStarted = CreateProcessAsUser(
+                            bool childProcStarted = CreateProcessAsUser(
                                                                         hToken,             // Token of the logged-on user. 
                                                                         ChildProcName,      // Name of the process to be started. 
                                                                         $" {parmeter}",               // Any command line arguments to be passed. 
@@ -159,11 +160,11 @@ namespace ServiceDemo
                                                                         false,              // Does NOT inherit parent's handles. 
                                                                         0,                  // No any specific creation flag. 
                                                                         null,               // Default environment path. 
-                                                                        @"D:\Repo\ServiceDemo\ParameterDemo\bin\Debug",               // Default current directory. 
+                                                                        Path.GetDirectoryName(ChildProcName),               // Default current directory. 
                                                                         ref tStartUpInfo,   // Process Startup Info.  
                                                                         out tProcessInfo    // Process information to be returned. 
                                                      );
-                            if (ChildProcStarted)
+                            if (childProcStarted)
                             {
                                 CloseHandle(tProcessInfo.hThread);
                                 CloseHandle(tProcessInfo.hProcess);

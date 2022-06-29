@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Security.Policy;
 using System.Text;
 using System.Web;
@@ -45,6 +46,11 @@ namespace ParameterDemo
             var res1 = client.CheckLoggedIn();
             Console.WriteLine(res1);
             Console.WriteLine(JsonConvert.SerializeObject(user));
+            Console.WriteLine(System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName);
+            Console.WriteLine(System.Environment.CurrentDirectory);
+            Console.WriteLine(System.AppDomain.CurrentDomain.BaseDirectory);
+            Console.WriteLine(System.AppDomain.CurrentDomain.SetupInformation.ApplicationBase);
+            Console.WriteLine(System.IO.Directory.GetCurrentDirectory());
             //Console.WriteLine(user?.Email);
             Console.ReadLine();
         }
