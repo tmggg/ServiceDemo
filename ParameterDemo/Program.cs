@@ -38,9 +38,10 @@ namespace ParameterDemo
                 Console.ReadLine();
                 return;
             }
-            var res = GetParam(args?[0]);
-            Console.WriteLine(res["code"]);
-            var tokenRes = client.GetAccessTokenByCode(res["code"]).Result;
+            //var res = GetParam(args?[0]);
+            //Console.WriteLine(res["code"]);
+            //var tokenRes = client.GetAccessTokenByCode(res["code"]).Result;
+            var tokenRes = client.GetAccessTokenByCode(args?[0]).Result;
             var user = client.GetUserInfoByAccessToken(tokenRes.AccessToken).Result;
             client.AccessToken = tokenRes.AccessToken;
             var res1 = client.CheckLoggedIn();

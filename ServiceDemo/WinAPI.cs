@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
+using System.Web;
 
 namespace ServiceDemo
 {
@@ -100,6 +103,42 @@ namespace ServiceDemo
             public int dwThreadId;
         }
 
+        [Flags]
+        enum CreateProcessFlags : uint
+        {
+            DEBUG_PROCESS = 0x00000001,
+            DEBUG_ONLY_THIS_PROCESS = 0x00000002,
+            CREATE_SUSPENDED = 0x00000004,
+            DETACHED_PROCESS = 0x00000008,
+            CREATE_NEW_CONSOLE = 0x00000010,
+            NORMAL_PRIORITY_CLASS = 0x00000020,
+            IDLE_PRIORITY_CLASS = 0x00000040,
+            HIGH_PRIORITY_CLASS = 0x00000080,
+            REALTIME_PRIORITY_CLASS = 0x00000100,
+            CREATE_NEW_PROCESS_GROUP = 0x00000200,
+            CREATE_UNICODE_ENVIRONMENT = 0x00000400,
+            CREATE_SEPARATE_WOW_VDM = 0x00000800,
+            CREATE_SHARED_WOW_VDM = 0x00001000,
+            CREATE_FORCEDOS = 0x00002000,
+            BELOW_NORMAL_PRIORITY_CLASS = 0x00004000,
+            ABOVE_NORMAL_PRIORITY_CLASS = 0x00008000,
+            INHERIT_PARENT_AFFINITY = 0x00010000,
+            INHERIT_CALLER_PRIORITY = 0x00020000,
+            CREATE_PROTECTED_PROCESS = 0x00040000,
+            EXTENDED_STARTUPINFO_PRESENT = 0x00080000,
+            PROCESS_MODE_BACKGROUND_BEGIN = 0x00100000,
+            PROCESS_MODE_BACKGROUND_END = 0x00200000,
+            CREATE_BREAKAWAY_FROM_JOB = 0x01000000,
+            CREATE_PRESERVE_CODE_AUTHZ_LEVEL = 0x02000000,
+            CREATE_DEFAULT_ERROR_MODE = 0x04000000,
+            CREATE_NO_WINDOW = 0x08000000,
+            PROFILE_USER = 0x10000000,
+            PROFILE_KERNEL = 0x20000000,
+            PROFILE_SERVER = 0x40000000,
+            CREATE_IGNORE_SYSTEM_DEFAULT = 0x80000000,
+        }
+
+
         /// <summary>
         /// 以当前登录的windows用户(角色权限)运行指定程序进程
         /// </summary>
@@ -117,18 +156,21 @@ namespace ServiceDemo
         /// <returns>是否调用成功</returns>
         [DllImport("ADVAPI32.DLL", SetLastError = true, CharSet = CharSet.Auto)]
         static extern bool CreateProcessAsUser(IntPtr hToken, string lpApplicationName, string lpCommandLine, IntPtr lpProcessAttributes, IntPtr lpThreadAttributes,
-                                                      bool bInheritHandles, uint dwCreationFlags, string lpEnvironment, string lpCurrentDirectory,
+                                                      bool bInheritHandles, uint dwCreationFlags, IntPtr lpEnvironment, string lpCurrentDirectory,
                                                       ref STARTUPINFO lpStartupInfo, out PROCESS_INFORMATION lpProcessInformation);
 
         [DllImport("KERNEL32.DLL", SetLastError = true, CharSet = CharSet.Auto)]
         static extern bool CloseHandle(IntPtr hHandle);
+
+        [DllImport("userenv.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        static extern bool CreateEnvironmentBlock(out IntPtr lpEnvironment, IntPtr hToken, bool bInherit);
         #endregion
 
         /// <summary>
         /// 以当前登录系统的用户角色权限启动指定的进程
         /// </summary>
         /// <param name="ChildProcName">指定的进程(全路径)</param>
-        public static void CreateProcess(string ChildProcName,string parmeter)
+        public static void CreateProcess(string ChildProcName, string parmeter)
         {
             IntPtr ppSessionInfo = IntPtr.Zero;
             UInt32 SessionCount = 0;
@@ -146,24 +188,58 @@ namespace ServiceDemo
                     if (WTS_CONNECTSTATE_CLASS.WTSActive == tSessionInfo.State)
                     {
                         IntPtr hToken = IntPtr.Zero;
+                        IntPtr lpEnvironment = IntPtr.Zero;
                         if (WTSQueryUserToken(tSessionInfo.SessionID, out hToken))
                         {
                             PROCESS_INFORMATION tProcessInfo;
                             STARTUPINFO tStartUpInfo = new STARTUPINFO();
                             tStartUpInfo.cb = Marshal.SizeOf(typeof(STARTUPINFO));
+                            CreateProcessFlags t = CreateProcessFlags.NORMAL_PRIORITY_CLASS |
+                                                   CreateProcessFlags.CREATE_NO_WINDOW |
+                                                   CreateProcessFlags.CREATE_UNICODE_ENVIRONMENT;
+                            CreateEnvironmentBlock(out lpEnvironment, hToken, false);
+                            string program = ChildProcName.Split(' ')[0];
+                            string param = ChildProcName.Substring(ChildProcName.IndexOf(' ') + 1);
                             bool childProcStarted = CreateProcessAsUser(
-                                                                        hToken,             // Token of the logged-on user. 
-                                                                        ChildProcName,      // Name of the process to be started. 
-                                                                        $" {parmeter}",               // Any command line arguments to be passed. 
-                                                                        IntPtr.Zero,        // Default Process' attributes. 
-                                                                        IntPtr.Zero,        // Default Thread's attributes. 
-                                                                        false,              // Does NOT inherit parent's handles. 
-                                                                        0,                  // No any specific creation flag. 
-                                                                        null,               // Default environment path. 
-                                                                        Path.GetDirectoryName(ChildProcName),               // Default current directory. 
-                                                                        ref tStartUpInfo,   // Process Startup Info.  
-                                                                        out tProcessInfo    // Process information to be returned. 
-                                                     );
+                                hToken,             // Token of the logged-on user. 
+                                program,      // Name of the process to be started. 
+                                " /b /c " + $"\"{param}\"",                   // Any command line arguments to be passed. 
+                                IntPtr.Zero,        // Default Process' attributes. 
+                                IntPtr.Zero,        // Default Thread's attributes. 
+                                false,              // Does NOT inherit parent's handles. 
+                                (uint)t,                  // No any specific creation flag. 
+                                lpEnvironment,               // Default environment path. 
+                                null,               // Default current directory. 
+                                ref tStartUpInfo,   // Process Startup Info.  
+                                out tProcessInfo    // Process information to be returned. 
+                            );
+                            //bool childProcStarted = CreateProcessAsUser(
+                            //                                            hToken,             // Token of the logged-on user. 
+                            //                                            program,      // Name of the process to be started. 
+                            //                                            " /b /c " + $"\"{param} {GetParam(parmeter)["code"]}\"",                   // Any command line arguments to be passed. 
+                            //                                            IntPtr.Zero,        // Default Process' attributes. 
+                            //                                            IntPtr.Zero,        // Default Thread's attributes. 
+                            //                                            false,              // Does NOT inherit parent's handles. 
+                            //                                            (uint)t,                  // No any specific creation flag. 
+                            //                                            lpEnvironment,               // Default environment path. 
+                            //                                            null,               // Default current directory. 
+                            //                                            ref tStartUpInfo,   // Process Startup Info.  
+                            //                                            out tProcessInfo    // Process information to be returned. 
+                            //                         );
+                            //bool childProcStarted = CreateProcessAsUser(
+                            //                                            hToken,             // Token of the logged-on user. 
+                            //                                            ChildProcName,      // Name of the process to be started. 
+                            //                                            $" {parmeter}",                   // Any command line arguments to be passed. 
+                            //                                            IntPtr.Zero,        // Default Process' attributes. 
+                            //                                            IntPtr.Zero,        // Default Thread's attributes. 
+                            //                                            false,              // Does NOT inherit parent's handles. 
+                            //                                            (uint)t,                  // No any specific creation flag. 
+                            //                                            lpEnvironment,               // Default environment path. 
+                            //                                            null,               // Default current directory. 
+                            //                                            ref tStartUpInfo,   // Process Startup Info.  
+                            //                                            out tProcessInfo    // Process information to be returned. 
+                            //                         );
+
                             if (childProcStarted)
                             {
                                 CloseHandle(tProcessInfo.hThread);
@@ -181,5 +257,35 @@ namespace ServiceDemo
                 WTSFreeMemory(ppSessionInfo);
             }
         }
+
+        public static Dictionary<string, string> GetParam(string url)
+        {
+            Dictionary<string, string> res = new Dictionary<string, string>();
+            int start = 0, end = 0;
+            var resstring = HttpUtility.UrlDecode(url);
+            start = resstring.IndexOf("?");
+            resstring = resstring.Substring(start + 1);
+            start = 0;
+            while (end != -1)
+            {
+                end = resstring.IndexOf("&", start, StringComparison.Ordinal);
+                if (end != -1)
+                {
+                    var temp = resstring.Substring(start, end - start).Split('=');
+                    res.Add(temp?[0], temp?[1]);
+                }
+                else
+                {
+                    var temp = resstring.Substring(start).Split('=');
+                    if (temp.Length == 1) break;
+                    res.Add(temp?[0], temp?[1]);
+                }
+                start = end + 1;
+            }
+
+            return res;
+        }
+
+
     }
 }

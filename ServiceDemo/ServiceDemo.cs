@@ -69,7 +69,7 @@ namespace ServiceDemo
                         context.Response.AddHeader("Server", "ServiceDemo");
                         using (StreamWriter writer = new StreamWriter(context.Response.OutputStream, Encoding.UTF8))
                         {
-                            writer.Write("ServiceDemo 已收到消息");
+                            writer.Write($"已为您启动 {res["start"].Substring(res["start"].IndexOf(' ') + 1)}");
                             writer.Close();
                             context.Response.Close();
                         }
