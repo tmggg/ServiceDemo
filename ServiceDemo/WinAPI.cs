@@ -195,15 +195,31 @@ namespace ServiceDemo
                             STARTUPINFO tStartUpInfo = new STARTUPINFO();
                             tStartUpInfo.cb = Marshal.SizeOf(typeof(STARTUPINFO));
                             CreateProcessFlags t = CreateProcessFlags.NORMAL_PRIORITY_CLASS |
-                                                   CreateProcessFlags.CREATE_NO_WINDOW |
+                                                   //CreateProcessFlags.CREATE_NO_WINDOW |
                                                    CreateProcessFlags.CREATE_UNICODE_ENVIRONMENT;
                             CreateEnvironmentBlock(out lpEnvironment, hToken, false);
-                            string program = ChildProcName.Split(' ')[0];
-                            string param = ChildProcName.Substring(ChildProcName.IndexOf(' ') + 1);
+                            int exeindex = ChildProcName.IndexOf("exe", StringComparison.Ordinal) + 3;
+                            string program = ChildProcName.Substring(1, exeindex);
+                            string param = ChildProcName.Substring(exeindex + 1, ChildProcName.LastIndexOf('"') - exeindex - 1).Trim();
+                            //string program = ChildProcName.Split(' ')[0];
+                            //string param = ChildProcName.Substring(ChildProcName.IndexOf(' ') + 1);
+                            //bool childProcStarted = CreateProcessAsUser(
+                            //    hToken,             // Token of the logged-on user. 
+                            //    program,      // Name of the process to be started. 
+                            //    " /b /c " + $"\"{param}\"",                   // Any command line arguments to be passed. 
+                            //    IntPtr.Zero,        // Default Process' attributes. 
+                            //    IntPtr.Zero,        // Default Thread's attributes. 
+                            //    false,              // Does NOT inherit parent's handles. 
+                            //    (uint)t,                  // No any specific creation flag. 
+                            //    lpEnvironment,               // Default environment path. 
+                            //    null,               // Default current directory. 
+                            //    ref tStartUpInfo,   // Process Startup Info.  
+                            //    out tProcessInfo    // Process information to be returned. 
+                            //);
                             bool childProcStarted = CreateProcessAsUser(
                                 hToken,             // Token of the logged-on user. 
                                 program,      // Name of the process to be started. 
-                                " /b /c " + $"\"{param}\"",                   // Any command line arguments to be passed. 
+                                 $" \"{param}\"",                   // Any command line arguments to be passed. 
                                 IntPtr.Zero,        // Default Process' attributes. 
                                 IntPtr.Zero,        // Default Thread's attributes. 
                                 false,              // Does NOT inherit parent's handles. 
@@ -229,7 +245,7 @@ namespace ServiceDemo
                             //bool childProcStarted = CreateProcessAsUser(
                             //                                            hToken,             // Token of the logged-on user. 
                             //                                            ChildProcName,      // Name of the process to be started. 
-                            //                                            $" {parmeter}",                   // Any command line arguments to be passed. 
+                            //                                            $" {GetParam(parmeter)["code"]}",                   // Any command line arguments to be passed. 
                             //                                            IntPtr.Zero,        // Default Process' attributes. 
                             //                                            IntPtr.Zero,        // Default Thread's attributes. 
                             //                                            false,              // Does NOT inherit parent's handles. 

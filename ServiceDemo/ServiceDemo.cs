@@ -52,46 +52,48 @@ namespace ServiceDemo
         /// </summary>
         private void StartListener()
         {
-            try
+            listener = new HttpListener();
+            listener.Prefixes.Add("http://localhost:54321/");
+            listener.Start();
+            while (true)
             {
-                listener = new HttpListener();
-                listener.Prefixes.Add("http://localhost:54321/");
-                listener.Start();
-                while (true)
+                var context = listener.GetContext();
+                if (!context.Request.Url.ToString().Contains("favicon.ico"))
                 {
-                    var context = listener.GetContext();
-                    if (!context.Request.Url.ToString().Contains("favicon.ico"))
-                    {
+#if DEBUG
                         eventLog.WriteEntry(context.Request.Url.ToString(), EventLogEntryType.Information, _eventID++);
-                        var res = GetParam(context.Request.Url.ToString());
-                        context.Response.StatusCode = (int)HttpStatusCode.OK;
-                        context.Response.StatusDescription = "OK";
-                        context.Response.AddHeader("Server", "ServiceDemo");
+#endif
+                    var res = GetParam(context.Request.Url.ToString());
+                    context.Response.StatusCode = (int)HttpStatusCode.OK;
+                    context.Response.StatusDescription = "OK";
+                    context.Response.AddHeader("Server", "ServiceDemo");
+                    try
+                    {
                         using (StreamWriter writer = new StreamWriter(context.Response.OutputStream, Encoding.UTF8))
                         {
-                            writer.Write($"已为您启动 {res["start"].Substring(res["start"].IndexOf(' ') + 1)}");
+                            //writer.Write($"已为您启动 {res["start"].Substring(res["start"].IndexOf(' ') + 1)}");
+                            writer.Write($"已为您启动 {res["start"]}");
                             writer.Close();
                             context.Response.Close();
                         }
+                    }
+                    catch (Exception e)
+                    {
+                        eventLog.WriteEntry($"Service Fail With ErrorMessage: {e.Message}", EventLogEntryType.Error, _eventID++);
+                        continue;
+                    }
+#if DEBUG
                         eventLog.WriteEntry($"Prepare to lunch {res["start"]}", EventLogEntryType.Information, _eventID++);
-                        try
-                        {
-                            Interop.CreateProcess(res["start"], context.Request.Url.ToString());
-                        }
-                        catch (Exception e)
-                        {
-                            eventLog.WriteEntry(e.Message, EventLogEntryType.Error, _eventID++);
-                        }
+#endif
+                    try
+                    {
+                        Interop.CreateProcess(res["start"], context.Request.Url.ToString());
+                    }
+                    catch (Exception e)
+                    {
+                        eventLog.WriteEntry($"Start Program Fail With ErrorMessage: {e.Message}", EventLogEntryType.Error, _eventID++);
                     }
                 }
-            }
-            catch (Exception e)
-            {
-                eventLog.WriteEntry($"Service Fail {e.Message}");
-                ServiceStatus serviceStatus = new ServiceStatus();
-                serviceStatus.dwCurrentState = ServiceState.SERVICE_STOPPED;
-                SetServiceStatus(this.ServiceHandle, ref serviceStatus);
-                throw;
             }
         }
 
