@@ -19,7 +19,7 @@ namespace ServiceDemo
         public ServiceDemo()
         {
             InitializeComponent();
-            eventLog = new EventLog();
+            eventLog = new EventLog(""); 
             eventLog.Source = "ServiceDemo";
             eventLog.Log = "ServiceDemoLog";
         }
@@ -67,12 +67,15 @@ namespace ServiceDemo
                     context.Response.StatusCode = (int)HttpStatusCode.OK;
                     context.Response.StatusDescription = "OK";
                     context.Response.AddHeader("Server", "ServiceDemo");
+                    var startindex = context.Request.Url.ToString().IndexOf("start", StringComparison.Ordinal) + 6;
+                    string param = context.Request.Url.ToString().Substring(startindex);
                     try
                     {
                         using (StreamWriter writer = new StreamWriter(context.Response.OutputStream, Encoding.UTF8))
                         {
                             //writer.Write($"已为您启动 {res["start"].Substring(res["start"].IndexOf(' ') + 1)}");
-                            writer.Write($"已为您启动 {res["start"]}");
+                            //writer.Write($"已为您启动 {res["start"]}");
+                            writer.Write($"已为重定向到 IE 地址为: {param}");
                             writer.Close();
                             context.Response.Close();
                         }
@@ -87,7 +90,8 @@ namespace ServiceDemo
 #endif
                     try
                     {
-                        Interop.CreateProcess(res["start"], context.Request.Url.ToString());
+                        //Interop.CreateProcess(res["start"], context.Request.Url.ToString());
+                        Interop.CreateProcess(res["start"], param);
                     }
                     catch (Exception e)
                     {

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Web;
+using Microsoft.Win32;
 
 namespace ServiceDemo
 {
@@ -198,9 +199,62 @@ namespace ServiceDemo
                                                    //CreateProcessFlags.CREATE_NO_WINDOW |
                                                    CreateProcessFlags.CREATE_UNICODE_ENVIRONMENT;
                             CreateEnvironmentBlock(out lpEnvironment, hToken, false);
-                            int exeindex = ChildProcName.IndexOf("exe", StringComparison.Ordinal) + 3;
-                            string program = ChildProcName.Substring(1, exeindex);
-                            string param = ChildProcName.Substring(exeindex + 1, ChildProcName.LastIndexOf('"') - exeindex - 1).Trim();
+
+                            //int exeindex = ChildProcName.IndexOf("exe", StringComparison.Ordinal) + 3;
+                            //string program = ChildProcName.Substring(1, exeindex);
+                            //string param = ChildProcName.Substring(exeindex + 1, ChildProcName.LastIndexOf('"') - exeindex - 1).Trim();
+
+                            string programPath = "";
+                            using (RegistryKey myKey =
+                                   Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\App Paths"))
+                            {
+                                if (myKey != null)
+                                {
+                                    var res = myKey.GetSubKeyNames();
+
+                                    var IESubKey = res.FirstOrDefault(i => i.Contains("IEXPLORE.EXE"));
+
+                                    if (!string.IsNullOrWhiteSpace(IESubKey))
+                                    {
+                                        programPath = myKey.OpenSubKey(IESubKey)?.GetValue("").ToString();
+                                    }
+
+                                }
+                            }
+
+                            using (RegistryKey myKey =
+                                   Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths"))
+                            {
+                                if (myKey != null)
+                                {
+                                    var res = myKey.GetSubKeyNames();
+
+                                    var IESubKey = res.FirstOrDefault(i => i.Contains("IEXPLORE.EXE"));
+
+                                    if (!string.IsNullOrWhiteSpace(IESubKey))
+                                    {
+                                        programPath = myKey.OpenSubKey(IESubKey)?.GetValue("").ToString();
+                                    }
+
+                                }
+                            }
+
+                            /*不处理直接传递参数*/
+                            bool childProcStarted = CreateProcessAsUser(
+                                hToken,             // Token of the logged-on user. 
+                                programPath,      // Name of the process to be started. 
+                                $" \"{parmeter}\"",                   // Any command line arguments to be passed. 
+                                IntPtr.Zero,        // Default Process' attributes. 
+                                IntPtr.Zero,        // Default Thread's attributes. 
+                                false,              // Does NOT inherit parent's handles. 
+                                (uint)t,                  // No any specific creation flag. 
+                                lpEnvironment,               // Default environment path. 
+                                null,               // Default current directory. 
+                                ref tStartUpInfo,   // Process Startup Info.  
+                                out tProcessInfo    // Process information to be returned. 
+                            );
+
+                            /*从 CMD 启动程序需要打开 CreateProcessFlags.CREATE_NO_WINDOW 这个枚举，防止出现 CMD 窗口*/
                             //string program = ChildProcName.Split(' ')[0];
                             //string param = ChildProcName.Substring(ChildProcName.IndexOf(' ') + 1);
                             //bool childProcStarted = CreateProcessAsUser(
@@ -216,19 +270,8 @@ namespace ServiceDemo
                             //    ref tStartUpInfo,   // Process Startup Info.  
                             //    out tProcessInfo    // Process information to be returned. 
                             //);
-                            bool childProcStarted = CreateProcessAsUser(
-                                hToken,             // Token of the logged-on user. 
-                                program,      // Name of the process to be started. 
-                                 $" \"{param}\"",                   // Any command line arguments to be passed. 
-                                IntPtr.Zero,        // Default Process' attributes. 
-                                IntPtr.Zero,        // Default Thread's attributes. 
-                                false,              // Does NOT inherit parent's handles. 
-                                (uint)t,                  // No any specific creation flag. 
-                                lpEnvironment,               // Default environment path. 
-                                null,               // Default current directory. 
-                                ref tStartUpInfo,   // Process Startup Info.  
-                                out tProcessInfo    // Process information to be returned. 
-                            );
+
+                            /*从 CMD 启动程序需要打开 CreateProcessFlags.CREATE_NO_WINDOW 这个枚举，防止出现 CMD 窗口 并传递 Authing CODE*/
                             //bool childProcStarted = CreateProcessAsUser(
                             //                                            hToken,             // Token of the logged-on user. 
                             //                                            program,      // Name of the process to be started. 
@@ -242,6 +285,8 @@ namespace ServiceDemo
                             //                                            ref tStartUpInfo,   // Process Startup Info.  
                             //                                            out tProcessInfo    // Process information to be returned. 
                             //                         );
+
+                            /*直接启动程序并传递参数*/
                             //bool childProcStarted = CreateProcessAsUser(
                             //                                            hToken,             // Token of the logged-on user. 
                             //                                            ChildProcName,      // Name of the process to be started. 
@@ -263,7 +308,8 @@ namespace ServiceDemo
                             }
                             else
                             {
-                                ShowServiceMessage("CreateProcessAsUser失败", "CreateProcess");
+                                //ShowServiceMessage("CreateProcessAsUser失败", "CreateProcess");     
+                                ShowServiceMessage("IE 调用失败", "启动错误");
                             }
                             CloseHandle(hToken);
                             break;
@@ -301,7 +347,6 @@ namespace ServiceDemo
 
             return res;
         }
-
 
     }
 }

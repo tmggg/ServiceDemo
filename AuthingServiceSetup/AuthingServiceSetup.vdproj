@@ -49,6 +49,22 @@
         "PrivateKeyFile" = "8:"
         "TimeStampServer" = "8:"
         "InstallerBootstrapper" = "3:2"
+            "BootstrapperCfg:{63ACBE69-63AA-4F98-B2B6-99F9E24495F2}"
+            {
+            "Enabled" = "11:TRUE"
+            "PromptEnabled" = "11:TRUE"
+            "PrerequisitesLocation" = "2:1"
+            "Url" = "8:"
+            "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.7.2"
+                    {
+                    "Name" = "8:Microsoft .NET Framework 4.7.2 (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.7.2"
+                    }
+                }
+            }
         }
         "Release"
         {
@@ -215,11 +231,11 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:AuthingServiceSetup"
         "ProductCode" = "8:{B772DAB0-ABDF-459F-98BE-5FDC4800AFAC}"
-        "PackageCode" = "8:{C36CC44B-76B8-45C4-8BE7-C6E22136B24F}"
+        "PackageCode" = "8:{1164EE40-6FB5-4FC2-9F3E-A27204263019}"
         "UpgradeCode" = "8:{B3F3D4D1-5567-446A-B011-6E1E3D2A1D83}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
-        "RemovePreviousVersions" = "11:FALSE"
+        "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:TRUE"
         "ProductVersion" = "8:1.0.0"
