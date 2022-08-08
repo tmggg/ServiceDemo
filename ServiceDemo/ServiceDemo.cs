@@ -19,7 +19,7 @@ namespace ServiceDemo
         public ServiceDemo()
         {
             InitializeComponent();
-            eventLog = new EventLog(""); 
+            eventLog = new EventLog("");
             eventLog.Source = "ServiceDemo";
             eventLog.Log = "ServiceDemoLog";
         }
@@ -61,7 +61,7 @@ namespace ServiceDemo
                 if (!context.Request.Url.ToString().Contains("favicon.ico"))
                 {
 #if DEBUG
-                        eventLog.WriteEntry(context.Request.Url.ToString(), EventLogEntryType.Information, _eventID++);
+                    eventLog.WriteEntry(context.Request.Url.ToString(), EventLogEntryType.Information, _eventID++);
 #endif
                     var res = GetParam(context.Request.Url.ToString());
                     context.Response.StatusCode = (int)HttpStatusCode.OK;
@@ -71,14 +71,17 @@ namespace ServiceDemo
                     string param = context.Request.Url.ToString().Substring(startindex);
                     try
                     {
-                        using (StreamWriter writer = new StreamWriter(context.Response.OutputStream, Encoding.UTF8))
-                        {
-                            //writer.Write($"已为您启动 {res["start"].Substring(res["start"].IndexOf(' ') + 1)}");
-                            //writer.Write($"已为您启动 {res["start"]}");
-                            writer.Write($"已为重定向到 IE 地址为: {param}");
-                            writer.Close();
-                            context.Response.Close();
-                        }
+                        var buffer = Encoding.UTF8.GetBytes(SetContent().Replace("param", param));
+                        context.Response.OutputStream.Write(buffer, 0, buffer.Length);
+                        //using (StreamWriter writer = new StreamWriter(context.Response.OutputStream, Encoding.UTF8))
+                        //{
+                        //    //writer.Write($"已为您启动 {res["start"].Substring(res["start"].IndexOf(' ') + 1)}");
+                        //    //writer.Write($"已为您启动 {res["start"]}");
+                        //    //writer.Write($"已为重定向到 IE 地址为: {param}");
+                        //    writer.Write(Encoding.UTF8.GetBytes(SetContent().Replace("param",param)));
+                        //    writer.Close();
+                        //    context.Response.Close();
+                        //}
                     }
                     catch (Exception e)
                     {
@@ -86,7 +89,7 @@ namespace ServiceDemo
                         continue;
                     }
 #if DEBUG
-                        eventLog.WriteEntry($"Prepare to lunch {res["start"]}", EventLogEntryType.Information, _eventID++);
+                    eventLog.WriteEntry($"Prepare to lunch {res["start"]}", EventLogEntryType.Information, _eventID++);
 #endif
                     try
                     {
@@ -151,6 +154,37 @@ namespace ServiceDemo
                 start = end + 1;
             }
             return res;
+        }
+
+        /// <summary>
+        /// 返回 HTML 代码
+        /// </summary>
+        /// <returns></returns>
+        private string SetContent()
+        {
+            return @"
+<!DOCTYPE html>
+<html lang=""en"">
+<head>
+  <meta charset=""UTF-8"">
+  <meta http-equiv=""X-UA-Compatible"" content=""IE=edge"">
+  <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+  <title>Authing</title>
+</head>
+<body>
+  <span>
+    已为您重定向到 IE，请查看任务栏是否已有 IE 浏览器启动<br>
+    此窗口将在 5 秒钟后自动关闭!
+  </span>
+  <script>
+    setTimeout(function close() {
+        window.close()
+    }, 5000)
+
+  </script>
+</body>
+</html>
+";
         }
     }
 }

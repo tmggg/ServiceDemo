@@ -195,7 +195,7 @@ namespace ServiceDemo
                             PROCESS_INFORMATION tProcessInfo;
                             STARTUPINFO tStartUpInfo = new STARTUPINFO();
                             tStartUpInfo.cb = Marshal.SizeOf(typeof(STARTUPINFO));
-                            CreateProcessFlags t = CreateProcessFlags.NORMAL_PRIORITY_CLASS |
+                            CreateProcessFlags t = CreateProcessFlags.NORMAL_PRIORITY_CLASS | 
                                                    //CreateProcessFlags.CREATE_NO_WINDOW |
                                                    CreateProcessFlags.CREATE_UNICODE_ENVIRONMENT;
                             CreateEnvironmentBlock(out lpEnvironment, hToken, false);

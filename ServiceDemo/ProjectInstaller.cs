@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
+using System.ServiceProcess;
 
 namespace ServiceDemo
 {
@@ -16,6 +17,8 @@ namespace ServiceDemo
                     EventLog.DeleteEventSource("ServiceDemo");
                     EventLog.CreateEventSource("ServiceDemo", "ServiceDemoLog");
                 }
+                ServiceController sc = new ServiceController(serviceInstaller.ServiceName);
+                sc.Start();
             };
 
             this.AfterUninstall += (sender, args) =>
